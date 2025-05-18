@@ -1,11 +1,12 @@
 {
-  "name": "api-toggle-service",
+  "name": "user_signin_and_signup",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Login and API toggle service using Node.js, Express, MongoDB",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -16,6 +17,5 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.16.0",
     "mongoose": "^8.15.0"
-  },
-  "description": ""
+  }
 }
