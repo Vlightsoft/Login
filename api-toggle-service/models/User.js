@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+// api-toggle-service/models/User.js
+const { mongoose } = require('../db'); // ✅ Use the shared instance from db.js
 
 const UserSchema = new mongoose.Schema({
   username: String,
