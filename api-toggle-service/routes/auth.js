@@ -3,10 +3,14 @@ const router = express.Router();
 const User = require('../models/User');
 const LoginHistory = require('../models/LoginHistory');
 const PlanInfo = require('../models/PlanInfo');
-
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { mongoose } = require('../db');  // Ensure db.js is correctly imported
+
+
 
 // 🛡 Helper: check if MongoDB is connected before running a DB operation
 function checkMongoConnection(res) {
@@ -52,6 +56,39 @@ const authMiddleware = async (req, res, next) => {
     });
   }
 };
+// 🧾  upload profile route
+const uploadDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${req.user._id}_profile${ext}`);
+  }
+});
+const upload = multer({ storage });
+
+// Upload profile picture
+router.post('/user/upload-profile-pic', authMiddleware, upload.single('profilePic'), async (req, res) => {
+  console.log("🔔 Upload route triggered");
+  console.log("📷 File received:", req.file); // 👈 Add this line
+
+  if (!req.file) {
+    return res.status(400).json({ code: 400, response: 'fail', message: { error: 'No file uploaded' } });
+  }
+
+  const profileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  req.user.profilePicUrl = profileUrl;
+  await req.user.save();
+
+  res.json({
+    code: 200,
+    response: 'success',
+    message: { profilePicUrl: profileUrl }
+  });
+});
+
 
 // 🧾 Signup Route
 router.post('/signup', async (req, res) => {
@@ -152,7 +189,16 @@ router.get('/user', authMiddleware, async (req, res) => {
     res.json({
       code: 200,
       response: "success",
-      message: { username: user.username, email: user.email }
+      //message: { username: user.username, email: user.email ,date:"12/05/1995"}
+       message:      {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profilePicUrl: user.profilePicUrl,
+        dateOfBirth: user.dateOfBirth,
+        phone: user.phone,
+        organizationName: user.organizationName
+      }
     });
   } catch (err) {
     console.error("❌ Error in get user info:", err.message);
@@ -164,10 +210,10 @@ router.get('/user', authMiddleware, async (req, res) => {
   }
 });
 
+
 // 🧾 Update User Info Route (PUT /user)
 router.put('/user', authMiddleware, async (req, res) => {
-  const { username, email, password } = req.body;
-
+  const { username, email, password, dateOfBirth, phone, organizationName} = req.body;
   try {
     // Validate fields
     if (!username || !email) {
@@ -182,14 +228,17 @@ router.put('/user', authMiddleware, async (req, res) => {
     user.username = username;
     user.email = email;
 
-    // If password is provided, hash and update it
+
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
       user.password = hashedPassword;
     }
-
+    if (dateOfBirth) user.dateOfBirth = new Date(dateOfBirth);
+    if (phone) user.phone = phone;
+    if (organizationName) user.organizationName = organizationName;
+   
     await user.save();
-    console.log("✅ User updated:", user.email);
+
 
     res.json({
       code: 200,
@@ -205,6 +254,7 @@ router.put('/user', authMiddleware, async (req, res) => {
     });
   }
 });
+
 
 // 🧾 Get User Login History Route (GET /user/login-history)
 router.get('/user/login-history', authMiddleware, async (req, res) => {

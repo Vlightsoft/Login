@@ -2,6 +2,7 @@ require('dotenv').config();  // Load environment variables
 const express = require('express');
 const cors = require('cors');
 const { connectDB } = require('./api-toggle-service/db');  // DB connection logic
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());               // Enable CORS for handling cross-origin requests
 app.use(express.json());       // Parse incoming JSON requests
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Initialize the server and connect to MongoDB
 (async () => {
   try {
