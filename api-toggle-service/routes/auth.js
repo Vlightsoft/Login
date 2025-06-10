@@ -190,15 +190,15 @@ router.get('/user', authMiddleware, async (req, res) => {
       code: 200,
       response: "success",
       //message: { username: user.username, email: user.email ,date:"12/05/1995"}
-       message:      {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        profilePicUrl: user.profilePicUrl,
-        dateOfBirth: user.dateOfBirth,
-        phone: user.phone,
-        organizationName: user.organizationName
-      }
+      message: {
+    _id: user._id,
+    username: user.username ?? null,
+    email: user.email ?? null,
+    profilePicUrl: user.profilePicUrl ?? null,
+    dateOfBirth: user.dateOfBirth ?? null,
+    phone: user.phone ?? null,
+    organizationName: user.organizationName ?? null
+  }
     });
   } catch (err) {
     console.error("❌ Error in get user info:", err.message);
