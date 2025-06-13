@@ -4,6 +4,8 @@ const UserPlan = require('../models/UserPlan');
 
 module.exports = async function apiKeyAuthAndLogger(req, res, next) {
   try {
+
+    console.log(req);
     const key = req.header('x-api-key');
     if (!key) return res.status(401).json({ message: 'API key missing' });
 
@@ -20,13 +22,21 @@ module.exports = async function apiKeyAuthAndLogger(req, res, next) {
       const responseTime = `${(diff[0] * 1000 + diff[1] / 1e6).toFixed(2)}ms`;
 
       try {
+      
         // Save API request history
         await new ApiRequestHistory({
           userId: apiKeyRecord.userId,
           endpoint: req.originalUrl,
           status: res.statusCode,
           responseTime,
-          requestBody: JSON.stringify(req.body),
+           requestBody:{
+    method: req.method,
+    url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+    headers: req.headers,
+    body: req.body,
+    ipAddress: req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress,
+    timestamp: new Date().toISOString()
+  },
           ipAddress: req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress,
           appName: apiKeyRecord.appName
         }).save();

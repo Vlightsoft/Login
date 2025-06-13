@@ -6,7 +6,7 @@ const apiRequestHistorySchema = new mongoose.Schema({
   status: Number,
   responseTime: String,
   timestamp: { type: Date, default: Date.now },
-  requestBody: String,
+   requestBody: { type: mongoose.Schema.Types.Mixed },
   ipAddress: String,
   appName: String,  // ✅ New field
   createdAt: {
