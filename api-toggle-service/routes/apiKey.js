@@ -60,7 +60,7 @@ router.post('/create', authMiddleware, async (req, res) => {
     res.status(201).json({
       code: 201,
       response: 'success',
-      message: { apiKey: newKey.key, appName: newKey.appName }
+      message: { id: newKey._id,apiKey: newKey.key, appName: newKey.appName }
     });
   } catch (err) {
     console.error('❌ Error creating API key:', err.message);
