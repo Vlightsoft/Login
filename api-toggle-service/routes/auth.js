@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const LoginHistory = require('../models/LoginHistory');
-const PlanInfo = require('../models/PlanInfo');
+const PlanInfo = require('../models/PlanTemplate');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -213,7 +213,7 @@ router.get('/user', authMiddleware, async (req, res) => {
 
 // 🧾 Update User Info Route (PUT /user)
 router.put('/user', authMiddleware, async (req, res) => {
-  const { username, email, password, dateOfBirth, phone, organizationName} = req.body;
+  const { username, password, dateOfBirth, phone, organizationName} = req.body;
   try {
     // Validate fields
     if (!username || !email) {

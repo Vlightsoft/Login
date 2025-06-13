@@ -1,34 +1,36 @@
-require('dotenv').config();  // Load environment variables
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { connectDB } = require('./api-toggle-service/db');  // DB connection logic
+const { connectDB } = require('./api-toggle-service/db');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());               // Enable CORS for handling cross-origin requests
-app.use(express.json());       // Parse incoming JSON requests
-//app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(cors());
+app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'api-toggle-service/uploads')));
 
-// Initialize the server and connect to MongoDB
+// ✅ Correct routes
+app.use('/api/auth', require('./api-toggle-service/routes/auth'));
+app.use('/api/service', require('./api-toggle-service/routes/apiToggle'));
+app.use('/api/plans', require('./api-toggle-service/routes/plans')); // ✅ Only this
+app.use('/api/keys', require('./api-toggle-service/routes/apiKey'));
+app.use('/api', require('./api-toggle-service/routes/apiHistory'));
+app.use('/api/datetime', require('./api-toggle-service/core-apis/datetime'));
+
+
+
+// Start server after DB connection
 (async () => {
   try {
-    // Attempt to connect to MongoDB before starting the server
     await connectDB();
-
-    // Register Routes
-    app.use('/api/auth', require('./api-toggle-service/routes/auth'));     // Authentication routes (signup, login)
-    app.use('/api/service', require('./api-toggle-service/routes/apiToggle'));  // Service API routes (for toggling features)
-
-    // Start the server on the specified port
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error("❌ Failed to start server:", err.message);
-    process.exit(1);  // Exit the process if the DB connection or server start fails
+    process.exit(1);
   }
 })();
