@@ -35,34 +35,22 @@ router.get('/history', authMiddleware, async (req, res) => {
 router.get('/usage/by-app', authMiddleware, async (req, res) => {
   try {
     const userId = req.user._id;
-
-   const usageStats = await ApiRequestHistory.aggregate([
+const usageStats = await ApiRequestHistory.aggregate([
   { $match: { userId } },
   {
-    // 👇 Extract base path like "/api/datetime"
     $addFields: {
       baseService: {
-        $arrayElemAt: [
-          { $split: ["$endpoint", "/", 4] }, // limit split depth
-          0
-        ]
-      }
-    }
-  },
-  {
-    $addFields: {
-      baseService: {
-        $cond: [
-          { $eq: ["$baseService", ""] },
-          { $arrayElemAt: [{ $split: ["$endpoint", "/"] }, 1] },
-          "$baseService"
+        $concat: [
+          { $arrayElemAt: [{ $split: ["$endpoint", "/"] }, 1] }, // e.g. 'api'
+          "/",
+          { $arrayElemAt: [{ $split: ["$endpoint", "/"] }, 2] }  // e.g. 'datetime'
         ]
       }
     }
   },
   {
     $group: {
-      _id: { appName: "$appName", service: "$baseService" },
+      _id: { appName: "$appName", service: { $concat: ["/", "$baseService"] } },
       totalRequests: { $sum: 1 }
     }
   },
