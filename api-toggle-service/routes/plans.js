@@ -6,6 +6,7 @@ const FeatureToggle = require('../models/FeatureToggle');
 const authMiddleware = require('../middleware/authMiddleware');
 const ApiKey = require('../models/ApiKey');
 const normalizeKey = require('../utils/normalizeKey');
+
 // Utility: clean number string
 function parseLimit(value) {
   if (typeof value === 'string' && value.trim().toLowerCase() === 'unlimited') return 'Unlimited';
@@ -13,6 +14,35 @@ function parseLimit(value) {
   return isNaN(n) ? 0 : n;
 }
 
+
+// PATCH /api/plans/increase-limit
+router.patch('/increase-limit', authMiddleware, async (req, res) => {
+  const { serviceName, newLimit } = req.body;
+
+  if (!serviceName || typeof newLimit !== 'number') {
+    return res.status(400).json({ message: 'serviceName and newLimit are required' });
+  }
+
+  try {
+   const plan = await UserPlan.findOne({ userId: req.user.id, isActive: true });
+console.log(plan);
+    if (!plan) {
+      return res.status(404).json({ message: 'User plan not found' });
+    }
+
+
+  const formatted = newLimit.toLocaleString('en-US'); // e.g., "30,000"
+plan.limits.set(serviceName, formatted); 
+    await plan.save();
+
+    res.json({ message: `Limit for '${serviceName}' updated successfully`, limits: plan.limits });
+  } catch (err) {
+    console.error('Error updating plan limit:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+module.exports = router;
 // 🧾 GET user's API services + all available plans
 router.get('/user/plan-services', authMiddleware, async (req, res) => {
   try {
@@ -25,7 +55,7 @@ router.get('/user/plan-services', authMiddleware, async (req, res) => {
     ]);
 
     const currentLimits = userPlan?.limits ? JSON.parse(JSON.stringify(userPlan.limits)) : {};
-
+console.log(currentLimits);
 const apiServices = Object.entries(currentLimits).map(([name, rawLimit]) => ({
   name,
   usage: userPlan?.usage?.get(name) || 0,
