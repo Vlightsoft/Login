@@ -36,33 +36,56 @@ router.get('/usage/by-app', authMiddleware, async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const usageStats = await ApiRequestHistory.aggregate([
-      { $match: { userId } },
-      {
-        $group: {
-          _id: { appName: "$appName", service: "$endpoint" },
-          totalRequests: { $sum: 1 }
-        }
-      },
-      {
-        $group: {
-          _id: "$_id.appName",
-          services: {
-            $push: {
-              service: "$_id.service",
-              count: "$totalRequests"
-            }
-          }
-        }
-      },
-      {
-        $project: {
-          appName: "$_id",
-          _id: 0,
-          services: 1
+   const usageStats = await ApiRequestHistory.aggregate([
+  { $match: { userId } },
+  {
+    // 👇 Extract base path like "/api/datetime"
+    $addFields: {
+      baseService: {
+        $arrayElemAt: [
+          { $split: ["$endpoint", "/", 4] }, // limit split depth
+          0
+        ]
+      }
+    }
+  },
+  {
+    $addFields: {
+      baseService: {
+        $cond: [
+          { $eq: ["$baseService", ""] },
+          { $arrayElemAt: [{ $split: ["$endpoint", "/"] }, 1] },
+          "$baseService"
+        ]
+      }
+    }
+  },
+  {
+    $group: {
+      _id: { appName: "$appName", service: "$baseService" },
+      totalRequests: { $sum: 1 }
+    }
+  },
+  {
+    $group: {
+      _id: "$_id.appName",
+      services: {
+        $push: {
+          service: "$_id.service",
+          count: "$totalRequests"
         }
       }
-    ]);
+    }
+  },
+  {
+    $project: {
+      appName: "$_id",
+      _id: 0,
+      services: 1
+    }
+  }
+]);
+
 
     res.json({
       code: 200,
