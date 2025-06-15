@@ -5,6 +5,7 @@ const UserPlan = require('../models/UserPlan');
 const FeatureToggle = require('../models/FeatureToggle');
 const authMiddleware = require('../middleware/authMiddleware');
 const ApiKey = require('../models/ApiKey');
+const normalizeKey = require('../utils/normalizeKey');
 // Utility: clean number string
 function parseLimit(value) {
   if (typeof value === 'string' && value.trim().toLowerCase() === 'unlimited') return 'Unlimited';
@@ -20,16 +21,16 @@ router.get('/user/plan-services', authMiddleware, async (req, res) => {
     const [plans, userPlan, toggles] = await Promise.all([
       PlanTemplate.find(),
       UserPlan.findOne({ userId, isActive: true }),
-      FeatureToggle.findOne({ userId }).lean()
+      FeatureToggle.findOne({ userId })
     ]);
 
     const currentLimits = userPlan?.limits ? JSON.parse(JSON.stringify(userPlan.limits)) : {};
 
- const apiServices = Object.entries(currentLimits).map(([name, rawLimit]) => ({
+const apiServices = Object.entries(currentLimits).map(([name, rawLimit]) => ({
   name,
-  usage: userPlan?.usage?.get(name) || 0, // ✅ Fix: use .get(name) for Map fields
+  usage: userPlan?.usage?.get(name) || 0,
   limit: parseLimit(rawLimit),
-  enabled: toggles?.toggles?.[name.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')] ?? true
+ enabled: toggles?.toggles?.get(normalizeKey(name)) ?? true // <-- ✅ fix here
 }));
     const allPlans = plans.map(p => ({
       selected: userPlan?.planId === p.id,
@@ -105,8 +106,16 @@ router.post('/assign', authMiddleware, async (req, res) => {
     });
 
     await newPlan.save();
+const toggles = {};
+for (const serviceName of planTemplate.limits.keys()) {
+ toggles[normalizeKey(serviceName)] = true;
+}
 
-
+await FeatureToggle.findOneAndUpdate(
+  { userId },
+  { $set: { toggles } },
+  { upsert: true, new: true }
+);
     
  
   // 🧠 Enforce API key limit with re-enable logic
@@ -161,7 +170,19 @@ router.post('/assign-custom', authMiddleware, async (req, res) => {
       isCustom: true
     });
 
-    await customPlan.save();
+   await customPlan.save();
+
+const toggles = {};
+for (const serviceName of Object.keys(limits)) {
+toggles[normalizeKey(serviceName)] = true;
+}
+
+await FeatureToggle.findOneAndUpdate(
+  { userId },
+  { $set: { toggles } },
+  { upsert: true, new: true }
+);
+
 
     res.status(201).json({
       code: 201,
@@ -177,5 +198,54 @@ router.post('/assign-custom', authMiddleware, async (req, res) => {
     });
   }
 });
+
+
+
+// PUT /toggle-api-service
+router.put('/toggle-api-service', authMiddleware, async (req, res) => {
+  const { serviceName, enabled } = req.body;
+
+  try {
+    const toggleDoc = await FeatureToggle.findOne({ userId: req.user._id });
+
+    if (!toggleDoc) {
+      return res.status(404).json({
+        code: 404,
+        response: 'fail',
+        message: 'Feature toggles not found'
+      });
+    }
+
+   const key = normalizeKey(serviceName);
+
+if (!toggleDoc.toggles.has(key)) {
+  return res.status(400).json({
+    code: 400,
+    response: 'fail',
+    message: 'Service not found in toggles'
+  });
+}
+
+toggleDoc.toggles.set(key, enabled);
+    await toggleDoc.save();
+
+    res.json({
+      code: 200,
+      response: 'success',
+      message: {
+        updated: { name: serviceName, enabled },
+        toggles: Object.fromEntries(toggleDoc.toggles) // return as plain object
+      }
+    });
+  } catch (err) {
+    console.error("❌ Error updating service toggle:", err.message);
+    res.status(500).json({
+      code: 500,
+      response: 'error',
+      message: err.message
+    });
+  }
+});
+
 
 module.exports = router;
