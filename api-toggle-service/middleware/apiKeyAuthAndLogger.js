@@ -3,6 +3,7 @@ const ApiRequestHistory = require('../models/ApiRequestHistory');
 const UserPlan = require('../models/UserPlan');
 const FeatureToggle = require('../models/FeatureToggle');
 const normalizeKey = require('../utils/normalizeKey');
+const serviceMap = require('../utils/serviceMap'); // 👈 use shared
 const rateLimit = require('express-rate-limit');
 
 const limiter = rateLimit({
@@ -37,16 +38,16 @@ module.exports = [
 
       req.userId = apiKeyRecord.userId;
 
-      const serviceMap = {
-        '/api/datetime': 'Date/Time APIs',
-        '/api/merge': 'File Merger APIs',
-        '/api/convert': 'Conversion Utilities',
-        '/api/validate': 'File Validators',
-        '/api/email': 'Email Validation',
-        '/api/virus': 'Virus Scanner',
-        '/api/bulk-merge': 'Bulk File Merger',
-        '/api/bulk-convert': 'Bulk File Convertor'
-      };
+      // const serviceMap = {
+      //   '/api/datetime': 'Date/Time APIs',
+      //   '/api/merge': 'File Merger APIs',
+      //   '/api/convert': 'Conversion Utilities',
+      //   '/api/validate': 'File Validators',
+      //   '/api/email': 'Email Validation',
+      //   '/api/virus': 'Virus Scanner',
+      //   '/api/bulk-merge': 'Bulk File Merger',
+      //   '/api/bulk-convert': 'Bulk File Convertor'
+      // };
 
       const matchedPrefix = Object.keys(serviceMap).find(prefix =>
         req.originalUrl.startsWith(prefix)
