@@ -18,8 +18,11 @@
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
     "jsonwebtoken": "^9.0.2",
+    "libreoffice-convert": "^1.6.1",
     "mongodb": "^6.16.0",
     "mongoose": "^8.15.0",
-    "multer": "^2.0.1"
+    "multer": "^2.0.1",
+    "pdf-lib": "^1.17.1",
+    "tmp-promise": "^3.0.3"
   }
 }
