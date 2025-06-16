@@ -53,7 +53,7 @@ router.get('/user/plan-services', authMiddleware, async (req, res) => {
       UserPlan.findOne({ userId, isActive: true }),
       FeatureToggle.findOne({ userId })
     ]);
-
+console.log(userPlan);
     const currentLimits = userPlan?.limits ? JSON.parse(JSON.stringify(userPlan.limits)) : {};
 console.log(currentLimits);
 const apiServices = Object.entries(currentLimits).map(([name, rawLimit]) => ({
@@ -119,7 +119,7 @@ router.post('/assign', authMiddleware, async (req, res) => {
         message: 'Plan not found'
       });
     }
-
+console.log(planTemplate);
     await UserPlan.updateMany({ userId, isActive: true }, { $set: { isActive: false } });
 
     const newPlan = new UserPlan({
@@ -187,7 +187,7 @@ router.post('/assign-custom', authMiddleware, async (req, res) => {
     const { limits, price, maxApiKeys, support } = req.body;
 
     await UserPlan.updateMany({ userId, isActive: true }, { $set: { isActive: false } });
-
+console.log(UserPlan);
     const customPlan = new UserPlan({
       userId,
       name: 'Custom',
