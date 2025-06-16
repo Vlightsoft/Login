@@ -4,6 +4,7 @@ const path = require('path');
 // In-memory storage (no files saved to disk)
 const storage = multer.memoryStorage();
 
+
 // Accept only specific file types
 const fileFilter = (req, file, cb) => {
   const allowed = ['.pdf', '.doc', '.docx', '.odt', '.rtf'];

@@ -14,6 +14,7 @@ RUN npm install
 
 # Expose the app port (optional for docs)
 EXPOSE 3000
-
-# Run the server
-CMD ["node", "server.js"]
+# Run setup scripts and start server
+CMD node api-toggle-service/scripts/normalizeExistingToggles.js && \
+    node api-toggle-service/seed/seedPlans.js && \
+    node server.js
