@@ -3,6 +3,16 @@ FROM node:18
 # Install LibreOffice
 RUN apt-get update && apt-get install -y libreoffice
 
+# Install Python, pip, and LibreOffice
+RUN apt-get update && apt-get install -y \
+  python3 \
+  python3-pip \
+  libreoffice \
+  && apt-get clean
+
+# Install required Python packages
+RUN pip3 install python-docx
+
 # Set working directory inside the container
 WORKDIR /app
 
@@ -12,8 +22,6 @@ COPY . .
 # Install Node dependencies
 RUN npm install
 
-# Install python-docx
-RUN pip3 install python-docx
 
 # Expose the app port (optional for docs)
 EXPOSE 3000
