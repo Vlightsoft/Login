@@ -12,6 +12,9 @@ COPY . .
 # Install Node dependencies
 RUN npm install
 
+# Install python-docx
+RUN pip3 install python-docx
+
 # Expose the app port (optional for docs)
 EXPOSE 3000
 # Run setup scripts and start server

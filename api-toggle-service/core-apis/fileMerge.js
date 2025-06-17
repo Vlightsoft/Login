@@ -4,37 +4,33 @@ const upload = require('../middleware/upload');
 const apiKeyAuth = require('../middleware/apiKeyAuthAndLogger');
 const { mergeFiles } = require('../utils/fileUtils');
 
-// /api/merge?outputFormat=pdf
+const fs = require('fs-extra');
+
+// /api/merge?outputFormat=pdf or docx
 router.post('/merge', apiKeyAuth, upload.array('files', 2), async (req, res) => {
   try {
-    console.log('🔧 /merge called');
-  console.log('🧾 Files received:', req.files.map(f => f.originalname));
-    if (!req.files || req.files.length !== 2) {
-      return res.status(400).json({ error: 'Exactly 2 files required for /merge' });
-    }
+    if (!req.files || req.files.length !== 2)
+      return res.status(400).json({ error: 'Exactly 2 files required' });
 
-    const outputFormat = req.query.outputFormat || 'pdf';
-    const merged = await mergeFiles(req.files, outputFormat);
-
-    res.setHeader('Content-Disposition', `attachment; filename=merged.${outputFormat}`);
-    res.end(merged);
+    const fileObj = await mergeFiles(req.files, req.query.outputFormat || 'pdf');
+    res.setHeader('Content-Type', fileObj.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileObj.name}"`);
+    res.sendFile(fileObj.path, {}, () => fs.unlink(fileObj.path).catch(() => {}));
   } catch (err) {
     res.status(500).json({ error: 'Merge failed', message: err.message });
   }
 });
 
-// /api/bulk-merge?outputFormat=pdf
+// /api/bulk-merge?outputFormat=pdf or docx
 router.post('/bulk-merge', apiKeyAuth, upload.array('files', 10), async (req, res) => {
   try {
-    if (req.files.length < 2 || req.files.length > 10) {
-      return res.status(400).json({ error: 'Provide between 2 to 10 files for bulk merge' });
-    }
+    if (!req.files || req.files.length < 2 || req.files.length > 10)
+      return res.status(400).json({ error: '2–10 files required' });
 
-    const outputFormat = req.query.outputFormat || 'pdf';
-    const merged = await mergeFiles(req.files, outputFormat);
-
-    res.setHeader('Content-Disposition', `attachment; filename=bulk-merged.${outputFormat}`);
-    res.end(merged);
+    const fileObj = await mergeFiles(req.files, req.query.outputFormat || 'pdf');
+    res.setHeader('Content-Type', fileObj.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileObj.name}"`);
+    res.sendFile(fileObj.path, {}, () => fs.unlink(fileObj.path).catch(() => {}));
   } catch (err) {
     res.status(500).json({ error: 'Bulk merge failed', message: err.message });
   }
