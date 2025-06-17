@@ -1,32 +1,28 @@
-FROM node:18
+FROM node:18-slim
 
-# Install system dependencies
+# 1. Install system dependencies including build tools
 RUN apt-get update && apt-get install -y \
   python3 python3-pip \
   libreoffice \
   fonts-dejavu \
-  gcc \
-  g++ \
-  libxml2-dev \
-  libxslt-dev \
+  gcc g++ \
+  libxml2-dev libxslt-dev libffi-dev pkg-config \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install python-docx and its required deps
-RUN pip3 install --no-cache-dir lxml python-docx
+# 2. Install python-docx and its dependencies
+RUN pip3 install --no-cache-dir python-docx lxml
 
-# Set working directory
+# 3. Set working directory
 WORKDIR /app
 
-# Copy files
+# 4. Copy and install Node.js dependencies
 COPY . .
-
-# Install Node dependencies
 RUN npm install
 
-# Expose port
+# 5. Expose port (if your app uses one)
 EXPOSE 3000
 
-# Run setup and start server
+# 6. Run pre-start scripts and launch
 CMD node api-toggle-service/scripts/normalizeExistingToggles.js && \
     node api-toggle-service/seed/seedPlans.js && \
     node server.js
