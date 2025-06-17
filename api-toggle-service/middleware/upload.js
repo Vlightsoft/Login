@@ -9,7 +9,8 @@ const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
   const allowed = ['.pdf', '.doc', '.docx', '.odt', '.rtf'];
   const ext = path.extname(file.originalname).toLowerCase();
-
+  console.log("test");
+console.log(ext);
   if (allowed.includes(ext)) {
     cb(null, true); // Accept
   } else {

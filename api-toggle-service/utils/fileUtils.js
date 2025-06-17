@@ -1,82 +1,105 @@
 const { PDFDocument } = require('pdf-lib');
 const libre = require('libreoffice-convert');
-const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs-extra');
 const os = require('os');
+const { promisify } = require('util');
 const { v4: uuidv4 } = require('uuid');
-const tmp = require('tmp-promise');
+
+
+
+libre.convertAsync = promisify(libre.convert);
 
 function getMimeType(ext) {
-  return {
+  const map = {
     '.pdf': 'application/pdf',
+    '.doc': 'application/msword',
     '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  }[ext] || 'application/octet-stream';
+    '.odt': 'application/vnd.oasis.opendocument.text',
+    '.rtf': 'application/rtf',
+    '.txt': 'text/plain'
+  };
+  return map[ext.toLowerCase()] || 'application/octet-stream';
 }
 
-async function convertToPdf(buffer) {
-  return await libre.convert(buffer, '.pdf');
+async function convertToPdf(buffer, originalName) {
+  return await libre.convertAsync(buffer, '.pdf', undefined);
 }
 
-exports.mergeFiles = async (files, outputFormat = 'pdf') => {
-  const format = outputFormat.toLowerCase().replace(/^\./, '');
 
-  if (format === 'pdf') {
-    const pdfs = [];
+exports.convertFile = async (file, outputFormat = 'pdf') => {
+  const ext = '.' + outputFormat.toLowerCase();
 
-    for (const file of files) {
-      const ext = path.extname(file.originalname).toLowerCase();
-      let pdfBuffer = ext === '.pdf' ? file.buffer : await convertToPdf(file.buffer);
-      pdfs.push(pdfBuffer);
-    }
-
-    const mergedPdf = await PDFDocument.create();
-    for (const pdf of pdfs) {
-      const doc = await PDFDocument.load(pdf);
-      const pages = await mergedPdf.copyPages(doc, doc.getPageIndices());
-      pages.forEach(page => mergedPdf.addPage(page));
-    }
-
-    const mergedBuffer = await mergedPdf.save();
-    const filename = `merged-${uuidv4()}.pdf`;
+  try {
+    const convertedBuffer = await libre.convertAsync(file.buffer, ext, undefined);
+    const filename = `converted-${uuidv4()}${ext}`;
     const filePath = path.join(os.tmpdir(), filename);
-    await fs.writeFile(filePath, mergedBuffer);
+
+    await fs.writeFile(filePath, convertedBuffer);
 
     return {
       path: filePath,
       name: filename,
-      mimeType: getMimeType('.pdf')
+      mimeType: getMimeType(ext)
     };
+  } catch (err) {
+    throw new Error(`Conversion to ${outputFormat} failed: ${err.message}`);
   }
+};
 
-  if (format === 'docx') {
-    const tmpDir = await tmp.dir();
-    const inputPaths = [];
 
-    for (const file of files) {
-      const ext = path.extname(file.originalname).toLowerCase();
-      const tmpPath = path.join(tmpDir.path, `${uuidv4()}${ext}`);
-      await fs.writeFile(tmpPath, file.buffer);
-      inputPaths.push(tmpPath);
+
+exports.mergeFiles = async (files, outputFormat = 'pdf') => {
+  const pdfs = [];
+
+  for (const file of files) {
+    const ext = file.originalname.split('.').pop().toLowerCase();
+    let pdfBuffer;
+
+    if (ext === 'pdf') {
+      pdfBuffer = file.buffer;
+    } else {
+      pdfBuffer = await convertToPdf(file.buffer, file.originalname);
     }
 
-    const outputPath = path.join(os.tmpdir(), `merged-${uuidv4()}.docx`);
-
-    await new Promise((resolve, reject) => {
-      const scriptPath = path.resolve('scripts/merge_docx.py');
-      const proc = spawn('python3', [scriptPath, ...inputPaths, outputPath]);
-
-      proc.stderr.on('data', data => console.error('PY STDERR:', data.toString()));
-      proc.on('error', reject);
-      proc.on('close', code => code === 0 ? resolve() : reject(new Error(`Python exited ${code}`)));
-    });
-
-    return {
-      path: outputPath,
-      name: path.basename(outputPath),
-      mimeType: getMimeType('.docx')
-    };
+    pdfs.push(pdfBuffer);
   }
 
-  throw new Error(`❌ Unsupported output format: ${outputFormat}`);
+  const mergedPdf = await PDFDocument.create();
+
+  for (const pdf of pdfs) {
+    const doc = await PDFDocument.load(pdf);
+    const pages = await mergedPdf.copyPages(doc, doc.getPageIndices());
+    pages.forEach(page => mergedPdf.addPage(page));
+  }
+
+  const mergedBuffer = await mergedPdf.save();
+
+  let finalBuffer = mergedBuffer;
+  const ext = '.' + outputFormat.toLowerCase();
+
+  if (outputFormat !== 'pdf') {
+    try {
+      const tempInputPath = path.join(os.tmpdir(), `merge-${uuidv4()}.pdf`);
+      await fs.writeFile(tempInputPath, mergedBuffer);
+
+      const inputBuffer = await fs.readFile(tempInputPath);
+      finalBuffer = await libre.convertAsync(inputBuffer, ext, undefined); // ✅ safe
+
+
+      await fs.unlink(tempInputPath).catch(() => {});
+    } catch (err) {
+      throw new Error(`Failed to convert merged PDF to ${outputFormat}: ${err.message}`);
+    }
+  }
+
+  const filename = `merged-${uuidv4()}${ext}`;
+  const filePath = path.join(os.tmpdir(), filename);
+  await fs.writeFile(filePath, finalBuffer);
+
+  return {
+    path: filePath,
+    name: filename,
+    mimeType: getMimeType(ext)
+  };
 };
