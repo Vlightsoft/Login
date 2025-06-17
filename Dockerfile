@@ -1,31 +1,30 @@
 FROM node:18
 
-# Install LibreOffice
-RUN apt-get update && apt-get install -y libreoffice
-
-# Install Python, pip, and LibreOffice
+# Install system dependencies (includes Python, pip, LibreOffice, compiler dependencies)
 RUN apt-get update && apt-get install -y \
-  python3 \
-  python3-pip \
+  python3 python3-pip \
   libreoffice \
-  && apt-get clean
+  fonts-dejavu \
+  libc6-dev \
+  gcc \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install required Python packages
-RUN pip3 install python-docx
+# Install python-docx for docx merging
+RUN pip3 install --no-cache-dir python-docx
 
 # Set working directory inside the container
 WORKDIR /app
 
-# Copy everything from your project into the container
+# Copy app files
 COPY . .
 
-# Install Node dependencies
+# Install Node.js dependencies
 RUN npm install
 
-
-# Expose the app port (optional for docs)
+# Expose port (if needed)
 EXPOSE 3000
-# Run setup scripts and start server
+
+# Run initial setup and start server
 CMD node api-toggle-service/scripts/normalizeExistingToggles.js && \
     node api-toggle-service/seed/seedPlans.js && \
     node server.js
