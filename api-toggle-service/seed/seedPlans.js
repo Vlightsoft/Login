@@ -20,6 +20,7 @@ const plans = [
       "Virus Scanner": "3,000",
       "Bulk File Merger": "500",
       "Bulk File Convertor": "500",
+      "Image Processor APIs":"500"
     },
   },
   {
@@ -38,6 +39,7 @@ const plans = [
       "Virus Scanner": "30,000",
       "Bulk File Merger": "10,000",
       "Bulk File Convertor": "10,000",
+       "Image Processor APIs":"500"
     },
   },
   {
@@ -56,6 +58,7 @@ const plans = [
       "Virus Scanner": "150,000",
       "Bulk File Merger": "30,000",
       "Bulk File Convertor": "30,000",
+       "Image Processor APIs":"500"
     },
     tag: "Best Value"
   },
@@ -75,6 +78,7 @@ const plans = [
       "Virus Scanner": "Unlimited",
       "Bulk File Merger": "Unlimited",
       "Bulk File Convertor": "Unlimited",
+       "Image Processor APIs":"500"
     },
   },
   {
@@ -93,6 +97,7 @@ const plans = [
       "Virus Scanner": "Custom",
       "Bulk File Merger": "Custom",
       "Bulk File Convertor": "Custom",
+       "Image Processor APIs":"500"
     },
   },
 ];

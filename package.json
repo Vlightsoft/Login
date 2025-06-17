@@ -24,7 +24,19 @@
     "mongoose": "^8.15.0",
     "multer": "^2.0.1",
     "pdf-lib": "^1.17.1",
+    "sharp": "^0.34.2",
     "tmp-promise": "^3.0.3",
-    "uuid": "^11.1.0"
-  }
+    "uuid": "^11.1.0",
+    "validator": "^13.15.15"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vlightsoft/Login.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Vlightsoft/Login/issues"
+  },
+  "homepage": "https://github.com/Vlightsoft/Login#readme"
 }

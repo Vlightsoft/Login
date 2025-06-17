@@ -6,5 +6,6 @@ module.exports = {
   '/api/email': 'Email Validation',
   '/api/virus': 'Virus Scanner',
   '/api/bulk-merge': 'Bulk File Merger',
-  '/api/bulk-convert': 'Bulk File Convertor'
+  '/api/bulk-convert': 'Bulk File Convertor',
+  '/api/image': 'Image Processor APIs'
 };
