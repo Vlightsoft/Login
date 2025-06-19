@@ -124,6 +124,52 @@ router.get('/dayinfo/:zone', (req, res) => {
   }
 });
 
+// GET /year-calendar/:year
+router.get('/year-calendar/:year', (req, res) => {
+  try {
+    const { year } = req.params;
+    const startDate = new Date(year, 0, 1); // Start from January 1st of the given year
+    const endDate = new Date(year, 11, 31); // End at December 31st of the given year
+
+    // Helper function to get all days in the year
+    const getDaysInMonth = (year, month) => {
+      const daysInMonth = [];
+      const date = new Date(year, month, 1);
+      while (date.getMonth() === month) {
+        daysInMonth.push(new Date(date));
+        date.setDate(date.getDate() + 1);
+      }
+      return daysInMonth;
+    };
+
+    // Generate calendar for each month
+    const calendar = [];
+    for (let month = 0; month < 12; month++) {
+      const days = getDaysInMonth(year, month);
+      const monthData = days.map(day => {
+        const weekday = format(day, 'EEEE', { timeZone: 'UTC' });
+        const isWeekend = ['Saturday', 'Sunday'].includes(weekday);
+        return {
+          date: format(day, 'yyyy-MM-dd'),
+          weekday,
+          isWeekend
+        };
+      });
+      calendar.push({ month: format(new Date(year, month), 'MMMM'), days: monthData });
+    }
+
+    res.json({ year, calendar });
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid year format', error: err.message });
+  }
+});
+
+router.get('/is-leap-year/:year', (req, res) => {
+  const { year } = req.params;
+  const isLeapYear = new Date(year, 1, 29).getDate() === 29;
+  res.json({ year, isLeapYear });
+});
+
 // POST /add
 router.post('/add', (req, res) => {
   const { datetime, amount, unit } = req.body;
