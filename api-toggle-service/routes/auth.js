@@ -213,32 +213,33 @@ router.get('/user', authMiddleware, async (req, res) => {
 
 // 🧾 Update User Info Route (PUT /user)
 router.put('/user', authMiddleware, async (req, res) => {
-  const { username, password, dateOfBirth, phone, organizationName} = req.body;
+  const { username, dateOfBirth, phone, organizationName } = req.body;
+  
   try {
-    // Validate fields
-    if (!username || !email) {
+    // Validate fields (excluding email and password)
+    if (!username) {
       return res.status(400).json({
         code: 400,
         response: "error",
-        message: { error: "Username and email are required" }
+        message: { error: "Username is required" }
       });
     }
 
     const user = req.user;
+    
+    // Update fields in the user object
     user.username = username;
-    user.email = email;
-
-
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      user.password = hashedPassword;
-    }
     if (dateOfBirth) user.dateOfBirth = new Date(dateOfBirth);
     if (phone) user.phone = phone;
     if (organizationName) user.organizationName = organizationName;
    
-    await user.save();
+    // Only update password if provided in the request
+    if (req.body.password) {
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+      user.password = hashedPassword;
+    }
 
+    await user.save();
 
     res.json({
       code: 200,
@@ -254,6 +255,7 @@ router.put('/user', authMiddleware, async (req, res) => {
     });
   }
 });
+
 
 
 // 🧾 Get User Login History Route (GET /user/login-history)
