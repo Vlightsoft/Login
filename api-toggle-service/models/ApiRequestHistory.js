@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-
+const { mongoose } = require('../db');
 const apiRequestHistorySchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   endpoint: String,

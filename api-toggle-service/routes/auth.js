@@ -191,6 +191,7 @@ router.get('/user', authMiddleware, async (req, res) => {
       response: "success",
       //message: { username: user.username, email: user.email ,date:"12/05/1995"}
       message: {
+    orgid:user.userID,
     _id: user._id,
     username: user.username ?? null,
     email: user.email ?? null,

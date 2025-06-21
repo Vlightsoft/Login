@@ -79,7 +79,9 @@ module.exports = [
 
         serviceLimit = Number(serviceLimit);
         if (isNaN(serviceLimit)) serviceLimit = Infinity;
-
+// console.log(userPlan);
+// console.log(currentCount);
+// console.log(serviceLimit);
         if (currentCount >= serviceLimit) {
           return res.status(429).json({
             code: 429,

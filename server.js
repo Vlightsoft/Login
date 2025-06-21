@@ -5,6 +5,8 @@ const cors = require('cors');
 const { connectDB } = require('./api-toggle-service/db');
 const imageProcessorRoutes = require('./api-toggle-service/core-apis/imageProcessor');
 const fileMergeRoutes = require('./api-toggle-service/core-apis/fileMerge');
+const documentToJson = require('./api-toggle-service/core-apis/documentToJson');
+
 const path = require('path');
 const app = express();
 //const PORT = process.env.PORT || 3000;
@@ -21,6 +23,10 @@ app.use('/api/plans', require('./api-toggle-service/routes/plans')); // ✅ Only
 app.use('/api/keys', require('./api-toggle-service/routes/apiKey'));
 app.use('/api', require('./api-toggle-service/routes/apiHistory'));
 app.use('/api/datetime', require('./api-toggle-service/core-apis/datetime'));
+
+app.use('/api/domains', require('./api-toggle-service/routes/verifiedDomains'));
+
+app.use('/api', documentToJson);
 app.use('/api', imageProcessorRoutes); 
 app.use('/api', fileMergeRoutes);
 app.use('/api/email', require('./api-toggle-service/core-apis/email'));

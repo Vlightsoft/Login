@@ -7,5 +7,6 @@ module.exports = {
   '/api/virus': 'Virus Scanner',
   '/api/bulk-merge': 'Bulk File Merger',
   '/api/bulk-convert': 'Bulk File Convertor',
-  '/api/image': 'Image Processor APIs'
+  '/api/image': 'Image Processor APIs',
+  '/api/document-to-json':'Document Parser APIs'
 };

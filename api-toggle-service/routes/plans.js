@@ -6,6 +6,7 @@ const FeatureToggle = require('../models/FeatureToggle');
 const authMiddleware = require('../middleware/authMiddleware');
 const ApiKey = require('../models/ApiKey');
 const normalizeKey = require('../utils/normalizeKey');
+//const adminKeyMiddleware = require('../middleware/adminKey');
 
 // Utility: clean number string
 function parseLimit(value) {
@@ -17,14 +18,16 @@ function parseLimit(value) {
 
 // PATCH /api/plans/increase-limit
 router.patch('/increase-limit', authMiddleware, async (req, res) => {
-  const { serviceName, newLimit } = req.body;
+  const {userId, serviceName, newLimit } = req.body;
 
   if (!serviceName || typeof newLimit !== 'number') {
+  
     return res.status(400).json({ message: 'serviceName and newLimit are required' });
   }
 
   try {
-   const plan = await UserPlan.findOne({ userId: req.user.id, isActive: true });
+   
+   const plan = await UserPlan.findOne({ userId, isActive: true });
 
     if (!plan) {
       return res.status(404).json({ message: 'User plan not found' });
@@ -184,8 +187,8 @@ if (updates.length > 0) {
 // 🧾 POST /assign-custom → Assign custom plan to user
 router.post('/assign-custom', authMiddleware, async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { limits, price, maxApiKeys, support } = req.body;
+    //const userId = req.user._id;
+    const { userId, limits, price, maxApiKeys, support } = req.body;
 
     await UserPlan.updateMany({ userId, isActive: true }, { $set: { isActive: false } });
 

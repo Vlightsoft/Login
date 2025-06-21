@@ -7,7 +7,7 @@ const storage = multer.memoryStorage();
 
 // Accept only specific file types
 const fileFilter = (req, file, cb) => {
-  const allowed = ['.pdf', '.doc', '.docx', '.odt', '.rtf'];
+  const allowed = ['.pdf', '.doc', '.docx', '.odt', '.rtf','.jpg','.jpeg','.png','.webp','.bmp','.tif','.tiff','.pbm','.pgm','.ppm','.gif'];
   const ext = path.extname(file.originalname).toLowerCase();
   console.log("test");
 console.log(ext);
