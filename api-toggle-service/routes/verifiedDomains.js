@@ -173,4 +173,55 @@ router.delete('/:domain/from-address/:email', authMiddleware, async (req, res) =
   }
 });
 
+
+// 🔥 Permanently delete domain and clear usage
+router.delete('/permanent-delete/:domain', authMiddleware, async (req, res) => {
+  try {
+    const domain = req.params.domain.toLowerCase();
+    const deleted = await VerifiedDomain.findOneAndDelete({ userId: req.user._id, domain });
+
+    if (deleted) {
+      const userPlan = await getActiveUserPlan(req.user._id);
+
+      const domainUsage = userPlan.usage?.get('Domain Limit') || 0;
+      const fromUsage = userPlan.usage?.get('From Address Limit') || 0;
+
+      userPlan.usage.set('Domain Limit', Math.max(0, domainUsage - 1));
+      userPlan.usage.set('From Address Limit', Math.max(0, fromUsage - (deleted.fromAddresses?.length || 0)));
+      userPlan.markModified('usage');
+      await userPlan.save();
+    }
+
+    res.json({ code: 200, response: 'success', message: 'Domain permanently deleted' });
+  } catch (err) {
+    res.status(500).json({ code: 500, response: 'error', message: err.message });
+  }
+});
+
+// 🔥 Permanently delete from address
+router.delete('/permanent-delete/:domain/from-address/:email', authMiddleware, async (req, res) => {
+  try {
+    const { domain, email } = req.params;
+
+    const updated = await VerifiedDomain.findOneAndUpdate(
+      { userId: req.user._id, domain: domain.toLowerCase() },
+      { $pull: { fromAddresses: { email } } },
+      { new: true }
+    );
+
+    if (updated) {
+      const userPlan = await getActiveUserPlan(req.user._id);
+      const current = userPlan.usage?.get('From Address Limit') || 0;
+      userPlan.usage.set('From Address Limit', Math.max(0, current - 1));
+      userPlan.markModified('usage');
+      await userPlan.save();
+    }
+
+    res.json({ code: 200, response: 'success', message: updated });
+  } catch (err) {
+    res.status(500).json({ code: 500, response: 'error', message: err.message });
+  }
+});
+
+
 module.exports = router;
